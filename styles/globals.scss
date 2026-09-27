@@ -388,6 +388,67 @@ button, input, textarea, select {
   border: 1px solid #f0abfc;
 }
 
+.score-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background-color: #fbf9ff;
+  color: #6d28d9;
+  border: 1px solid #ddd6fe;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 5px 12px;
+  line-height: 1;
+  white-space: nowrap;
+  letter-spacing: -0.01em;
+
+  strong {
+    font-weight: 700;
+    color: #4c1d95;
+  }
+}
+
+.result-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(124, 58, 237, 0.08);
+}
+
+.minimal-result-box {
+  background: #ffffff;
+  border: 1px solid var(--border-subtle);
+  border-radius: 16px;
+  padding: 18px 20px;
+  box-shadow: 0 4px 18px rgba(124, 58, 237, 0.04);
+}
+
+.btn-minimal-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #faf8ff;
+  border: 1px solid #e9d5ff;
+  color: #6b21a8;
+  border-radius: 7px;
+  padding: 4px 9px;
+  font-size: 0.72rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+
+  &:hover {
+    background: #ede9fe;
+    color: #4c1d95;
+    border-color: #c4b5fd;
+  }
+}
+
 /* Result Sections */
 .analysis-section-card {
   background-color: var(--purple-50);

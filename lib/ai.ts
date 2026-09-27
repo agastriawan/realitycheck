@@ -12,9 +12,10 @@ interface CallAiOptions {
 
 export async function analyzePlanWithAi(options: CallAiOptions): Promise<AnalysisResponse> {
   const { planText, contextDate } = options;
-  const apiKey = options.apiKey || process.env.AI_API_KEY;
-  const model = options.model || process.env.AI_MODEL || 'gemini-1.5-flash';
-  const baseUrl = options.baseUrl || process.env.AI_BASE_URL;
+  const apiKey = (options.apiKey && options.apiKey.trim() !== '') ? options.apiKey : process.env.AI_API_KEY;
+  const rawModel = (options.model && options.model.trim() !== '') ? options.model : (process.env.AI_MODEL || 'gemini-flash-latest');
+  const model = rawModel.replace(/[\u2010-\u2015\u2212]/g, '-').trim() || 'gemini-flash-latest';
+  const baseUrl = (options.baseUrl && options.baseUrl.trim() !== '') ? options.baseUrl : process.env.AI_BASE_URL;
 
   if (!planText || !planText.trim()) {
     throw new Error('Rencana aktivitas tidak boleh kosong.');
@@ -23,7 +24,7 @@ export async function analyzePlanWithAi(options: CallAiOptions): Promise<Analysi
   // If API key is available, call the actual LLM API
   if (apiKey && apiKey.trim() !== '') {
     try {
-      if (model.toLowerCase().includes('gemini') || (!baseUrl && apiKey.startsWith('AIza'))) {
+      if (model.toLowerCase().includes('gemini') || (!baseUrl && (apiKey.startsWith('AIza') || apiKey.startsWith('AQ.')))) {
         return await callGeminiApi(planText, contextDate, apiKey, model);
       } else {
         return await callOpenAiCompatibleApi(planText, contextDate, apiKey, model, baseUrl);
@@ -43,40 +44,62 @@ export async function analyzePlanWithAi(options: CallAiOptions): Promise<Analysi
 
 async function callGeminiApi(planText: string, contextDate: string | undefined, apiKey: string, model: string): Promise<AnalysisResponse> {
   const prompt = buildAnalysisPrompt(planText, contextDate);
-  const cleanModel = model.replace(/^models\//, '');
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${cleanModel}:generateContent?key=${apiKey}`;
+  
+  // Tetapkan 1 model resmi dari Google AI Studio: gemini-flash-latest
+  const targetModel = 'gemini-flash-latest';
+  const trimmedKey = apiKey.trim();
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${targetModel}:generateContent`;
 
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      systemInstruction: {
-        parts: [{ text: SYSTEM_PROMPT }]
+  const maxRetries = 3;
+  let lastError = '';
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-goog-api-key': trimmedKey,
       },
-      contents: [{
-        role: 'user',
-        parts: [{ text: prompt }]
-      }],
-      generationConfig: {
-        responseMimeType: 'application/json',
-        temperature: 0.2
+      body: JSON.stringify({
+        systemInstruction: {
+          parts: [{ text: SYSTEM_PROMPT }]
+        },
+        contents: [{
+          role: 'user',
+          parts: [{ text: prompt }]
+        }],
+        generationConfig: {
+          responseMimeType: 'application/json',
+          temperature: 0.2
+        }
+      })
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      const textContent = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!textContent) {
+        throw new Error('Tidak ada respon teks dari model Gemini.');
       }
-    })
-  });
+      const parsed = parseJsonFromAiText(textContent);
+      return sanitizeAndValidateAnalysisResponse(parsed);
+    }
 
-  if (!response.ok) {
     const errorText = await response.text();
-    throw new Error(`Gemini API error (${response.status}): ${errorText}`);
+    lastError = `Gemini API error (${response.status}): ${errorText}`;
+
+    // Jika server Google sedang lonjakan trafik (503 / 429), gunakan progressive backoff (2s, 3s)
+    if ([503, 429].includes(response.status) && attempt < maxRetries) {
+      const waitTime = attempt * 2000; // 2s pada retry pertama, 4s pada retry kedua
+      console.warn(`Gemini API returned ${response.status} (High Demand). Retrying attempt ${attempt + 1}/${maxRetries} in ${waitTime / 1000}s...`);
+      await new Promise((resolve) => setTimeout(resolve, waitTime));
+      continue;
+    }
+
+    throw new Error(lastError);
   }
 
-  const data = await response.json();
-  const textContent = data.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!textContent) {
-    throw new Error('Tidak ada respon teks dari model Gemini.');
-  }
-
-  const parsed = parseJsonFromAiText(textContent);
-  return sanitizeAndValidateAnalysisResponse(parsed);
+  throw new Error(lastError || 'Gagal menghubungi Gemini API setelah beberapa percobaan.');
 }
 
 async function callOpenAiCompatibleApi(

@@ -50,14 +50,14 @@ ${result.missing_information.length > 0 ? `Informasi Belum Tersedia:\n${result.m
     <div className="minimal-result-box">
       {/* Header Line: Status & Score */}
       <div className="result-header-row">
-        <div className="d-flex align-items-center gap-2.5">
+        <div className="d-flex align-items-center flex-wrap" style={{ gap: '12px' }}>
           <StatusBadge status={result.status} size="md" />
           <span className="score-pill">
-            Skor: <strong>{result.score}</strong>/100
+            Skor: <strong>{result.score}</strong> / 100
           </span>
         </div>
 
-        <div className="d-flex align-items-center gap-2">
+        <div className="d-flex align-items-center" style={{ gap: '8px' }}>
           <button onClick={copyToClipboard} className="btn-minimal-action" title="Salin">
             {copied ? <Check size={13} className="text-purple-700" /> : <Copy size={13} />}
             <span>{copied ? 'Tersalin' : 'Salin'}</span>
@@ -71,7 +71,7 @@ ${result.missing_information.length > 0 ? `Informasi Belum Tersedia:\n${result.m
 
       {/* 1. Ringkasan */}
       <div className="mb-3">
-        <p className="mb-0 text-dark" style={{ fontSize: '0.84rem', lineHeight: '1.6' }}>
+        <p className="mb-0 text-dark" style={{ fontSize: '0.84rem', lineHeight: '1.65' }}>
           {result.summary}
         </p>
       </div>
@@ -79,19 +79,19 @@ ${result.missing_information.length > 0 ? `Informasi Belum Tersedia:\n${result.m
       {/* 2. Timeline & Aktivitas */}
       {result.activities && result.activities.length > 0 && (
         <div className="mb-3">
-          <div className="fw-bold mb-1.5" style={{ color: '#2e1065', fontSize: '0.8rem' }}>
+          <div className="fw-bold mb-2 text-purple-950" style={{ fontSize: '0.82rem' }}>
             Timeline Aktivitas
           </div>
-          <div className="d-flex flex-column gap-1">
+          <div className="d-flex flex-column gap-1.5">
             {result.activities.map((a, idx) => (
-              <div key={idx} className="d-flex flex-wrap align-items-baseline gap-1.5" style={{ fontSize: '0.8rem' }}>
-                <span className="fw-semibold text-purple-900" style={{ minWidth: '88px' }}>
+              <div key={idx} className="d-flex flex-wrap align-items-baseline" style={{ gap: '8px', fontSize: '0.82rem' }}>
+                <span className="fw-semibold text-purple-900" style={{ minWidth: '96px' }}>
                   {a.start && a.end ? `${a.start} – ${a.end}` : 'Fleksibel'}
                 </span>
                 <span className="text-muted d-none d-sm-inline">•</span>
                 <span className="text-dark fw-medium">{a.name}</span>
                 {a.duration_minutes > 0 && (
-                  <span className="text-muted" style={{ fontSize: '0.74rem' }}>
+                  <span className="text-muted" style={{ fontSize: '0.76rem' }}>
                     (~{Math.floor(a.duration_minutes / 60) > 0 ? `${Math.floor(a.duration_minutes / 60)}j ` : ''}
                     {a.duration_minutes % 60 > 0 ? `${a.duration_minutes % 60}m` : ''})
                   </span>

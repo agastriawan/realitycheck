@@ -4,12 +4,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import { AnalysisResponse, HistoryItem } from '@/types/analysis';
 import { AnalysisResult } from '@/components/AnalysisResult';
 import { StatusBadge } from '@/components/StatusBadge';
-import { ApiKeyModal } from '@/components/ApiKeyModal';
 import { getHistory, saveAnalysisToHistory, deleteHistoryItem } from '@/lib/storage';
 import {
   Send,
   Plus,
-  Settings,
   Calendar,
   Trash2,
   CalendarCheck2,
@@ -56,7 +54,6 @@ export default function RealityCheckApp() {
   const [inputPlan, setInputPlan] = useState('');
   const [contextDate, setContextDate] = useState('Besok');
   const [isLoading, setIsLoading] = useState(false);
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isPresetsOpen, setIsPresetsOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
@@ -113,16 +110,6 @@ export default function RealityCheckApp() {
     setActiveResult(null);
     setInputPlan('');
 
-    let clientApiKey: string | undefined;
-    let clientModel: string | undefined;
-    let clientBaseUrl: string | undefined;
-
-    if (typeof window !== 'undefined') {
-      clientApiKey = localStorage.getItem('rc_user_api_key') || undefined;
-      clientModel = localStorage.getItem('rc_user_model') || undefined;
-      clientBaseUrl = localStorage.getItem('rc_user_base_url') || undefined;
-    }
-
     try {
       const response = await fetch('/api/analyze', {
         method: 'POST',
@@ -130,9 +117,6 @@ export default function RealityCheckApp() {
         body: JSON.stringify({
           planText: planToAnalyze,
           contextDate: dateToAnalyze,
-          apiKey: clientApiKey,
-          model: clientModel,
-          baseUrl: clientBaseUrl,
         }),
       });
 
@@ -293,13 +277,6 @@ export default function RealityCheckApp() {
               title="Buka Preset Test Cases"
             >
               <FileText size={15} />
-            </button>
-            <button
-              onClick={() => setIsSettingsOpen(true)}
-              className="canvas-btn-icon"
-              title="Pengaturan Model AI"
-            >
-              <Settings size={15} />
             </button>
           </div>
         </header>
@@ -465,13 +442,6 @@ export default function RealityCheckApp() {
         </footer>
       </main>
 
-      {/* Settings Modal */}
-      <ApiKeyModal
-        isOpen={isSettingsOpen}
-        onClose={() => setIsSettingsOpen(false)}
-        onSave={() => { }}
-      />
-
       {/* Preset Picker Modal */}
       {isPresetsOpen && (
         <div className="modal-backdrop-custom">
@@ -479,7 +449,7 @@ export default function RealityCheckApp() {
             <div className="d-flex align-items-center justify-content-between mb-3 border-bottom pb-2.5 border-purple-100">
               <div className="d-flex align-items-center gap-2.5">
                 <div className="brand-icon-box" style={{ width: '36px', height: '36px' }}>
-                  <ListChecks size={18} />
+                  <FileText size={18} />
                 </div>
                 <div>
                   <h6 className="mb-0 fw-bold" style={{ color: '#2e1065', fontSize: '0.98rem' }}>Pilih Contoh Rencana</h6>
